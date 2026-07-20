@@ -13,106 +13,54 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 export default function SvgSlider() {
-  const categories = [
-    "Big Brands",
-    "Work From Home",
-    "Part-time",
-    "MBA",
-    "Engineering",
-    "Media",
-    "Design",
-    "Data Science",
-  ];
-  // const internships = [
-  //   {
-  //     _id: "1",
-  //     title: "Software Engineering Intern",
-  //     company: "Google",
-  //     location: "Remote",
-  //     stipend: "$1,500/month",
-  //     duration: "3 months",
-  //     category: "Engineering",
-  //   },
-  //   {
-  //     _id: "2",
-  //     title: "Marketing Intern",
-  //     company: "Meta",
-  //     location: "New York",
-  //     stipend: "$1,200/month",
-  //     duration: "6 months",
-  //     category: "Media",
-  //   },
-  //   {
-  //     _id: "3",
-  //     title: "Graphic Design Intern",
-  //     company: "Adobe",
-  //     location: "San Francisco",
-  //     stipend: "$1,000/month",
-  //     duration: "4 months",
-  //     category: "Design",
-  //   },
-  // ];
+  const { t } = useTranslation();
 
-  // const jobs = [
-  //   {
-  //     _id: "101",
-  //     title: "Frontend Developer",
-  //     company: "Amazon",
-  //     location: "Seattle",
-  //     CTC: "$100K/year",
-  //     Experience: "2+ years",
-  //     category: "Engineering",
-  //   },
-  //   {
-  //     _id: "102",
-  //     title: "Data Analyst",
-  //     company: "Microsoft",
-  //     location: "Remote",
-  //     CTC: "$90K/year",
-  //     Experience: "1+ years",
-  //     category: "Data Science",
-  //   },
-  //   {
-  //     _id: "103",
-  //     title: "UX Designer",
-  //     company: "Apple",
-  //     location: "California",
-  //     CTC: "$110K/year",
-  //     Experience: "3+ years",
-  //     category: "Design",
-  //   },
-  // ];
+  // Display label via translation key; `value` stays the English DB category so
+  // filtering keeps working regardless of the active UI language.
+  const categories = [
+    { value: "Big Brands", key: "bigBrands" },
+    { value: "Work From Home", key: "workFromHome" },
+    { value: "Part-time", key: "partTime" },
+    { value: "MBA", key: "mba" },
+    { value: "Engineering", key: "engineering" },
+    { value: "Media", key: "media" },
+    { value: "Design", key: "design" },
+    { value: "Data Science", key: "dataScience" },
+  ];
+
   const slides = [
     {
       pattern: "pattern-1",
-      title: "Start Your Career Journey",
+      titleKey: "careerJourney",
       bgColor: "bg-indigo-600",
     },
     {
       pattern: "pattern-2",
-      title: "Learn From The Best",
+      titleKey: "learnFromBest",
       bgColor: "bg-blue-600",
     },
     {
       pattern: "pattern-3",
-      title: "Grow Your Skills",
+      titleKey: "growSkills",
       bgColor: "bg-purple-600",
     },
     {
       pattern: "pattern-4",
-      title: "Connect With Top Companies",
+      titleKey: "connectCompanies",
       bgColor: "bg-teal-600",
     },
   ];
 
   const stats = [
-    { number: "300K+", label: "companies hiring" },
-    { number: "10K+", label: "new openings everyday" },
-    { number: "21Mn+", label: "active students" },
-    { number: "600K+", label: "learners" },
+    { number: "300K+", key: "companiesHiring" },
+    { number: "10K+", key: "newOpenings" },
+    { number: "21Mn+", key: "activeStudents" },
+    { number: "600K+", key: "learners" },
   ];
+
   const [internships, setinternship] = useState<any>([]);
   const [jobs, setjob] = useState<any>([]);
   useEffect(() => {
@@ -142,9 +90,9 @@ export default function SvgSlider() {
       {/* hero section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Make your dream career a reality
+          {t("home.heroTitle")}
         </h1>
-        <p className="text-xl text-gray-600">Trending on InternArea 🔥</p>
+        <p className="text-xl text-gray-600">{t("home.heroSubtitle")}</p>
       </div>
       {/* Swiper section */}
       <div className="mb-16">
@@ -233,7 +181,7 @@ export default function SvgSlider() {
                 {/* Content */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <h2 className="text-4xl font-bold text-white">
-                    {slide.title}
+                    {t(`home.slide.${slide.titleKey}`)}
                   </h2>
                 </div>
               </div>
@@ -244,21 +192,23 @@ export default function SvgSlider() {
       {/* Category section */}
       <div className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          Latest internships on Intern Area
+          {t("home.latestInternships")}
         </h2>
         <div className="flex flex-wrap gap-4">
-          <span className="text-gray-700 font-medium">POPULAR CATEGORIES:</span>
+          <span className="text-gray-700 font-medium">
+            {t("home.popularCategories")}
+          </span>
           {categories.map((category) => (
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
+              key={category.value}
+              onClick={() => setSelectedCategory(category.value)}
               className={`px-4 py-2 rounded-full transition-colors ${
-                selectedCategory === category
+                selectedCategory === category.value
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {category}
+              {t(`home.category.${category.key}`)}
             </button>
           ))}
         </div>
@@ -272,7 +222,7 @@ export default function SvgSlider() {
           >
             <div className="flex items-center gap-2 text-blue-600 mb-4">
               <ArrowUpRight size={20} />
-              <span className="font-medium">Actively Hiring</span>
+              <span className="font-medium">{t("home.activelyHiring")}</span>
             </div>
             <h3 className="text-lg font-semibold mb-2 text-gray-800">
               {internship.title}
@@ -294,13 +244,13 @@ export default function SvgSlider() {
             </div>
             <div className="flex items-center justify-between mt-6">
               <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                Internship
+                {t("home.internship")}
               </span>
               <Link
                 href={`/detailiternship/${internship._id}`}
                 className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
               >
-                View details
+                {t("home.viewDetails")}
                 <ChevronRight size={16} />
               </Link>
             </div>
@@ -309,7 +259,9 @@ export default function SvgSlider() {
       </div>
       {/* Jobs grid   */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Latest Jobs</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          {t("home.latestJobs")}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
           {filteredJobs.map((job: any, index: any) => (
             <div
@@ -318,7 +270,7 @@ export default function SvgSlider() {
             >
               <div className="flex items-center gap-2 text-blue-600 mb-4">
                 <ArrowUpRight size={20} />
-                <span className="font-medium">Actively Hiring</span>
+                <span className="font-medium">{t("home.activelyHiring")}</span>
               </div>
               <h3 className="text-lg font-semibold mb-2 text-gray-800">
                 {job.title}
@@ -340,13 +292,13 @@ export default function SvgSlider() {
               </div>
               <div className="flex items-center justify-between mt-6">
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                  Jobs
+                  {t("home.job")}
                 </span>
                 <Link
                   href={`/detailInternship?q=${job._id}`}
                   className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
-                  View details
+                  {t("home.viewDetails")}
                   <ChevronRight size={16} />
                 </Link>
               </div>
@@ -362,7 +314,7 @@ export default function SvgSlider() {
               <div className="text-4xl font-bold text-blue-600 mb-2">
                 {stat.number}
               </div>
-              <div className="text-gray-600">{stat.label}</div>
+              <div className="text-gray-600">{t(`home.stat.${stat.key}`)}</div>
             </div>
           ))}
         </div>

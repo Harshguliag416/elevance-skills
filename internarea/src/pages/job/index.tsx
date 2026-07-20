@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const index = () => {
+  const { t } = useTranslation();
   // const filteredJobs = [
   //   {
   //     _id: "101",
@@ -174,7 +176,7 @@ const index = () => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <Filter className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-black">Filters</span>
+                <span className="font-medium text-black">{t("job.filters")}</span>
               </div>
               <button
                 onClick={clearFilters}
@@ -195,7 +197,7 @@ const index = () => {
                   value={filter.category}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Marketing Intern"
+                  placeholder={t("job.categoryPlaceholder")}
                 />
               </div>
               {/* Location Filter */}
@@ -209,7 +211,7 @@ const index = () => {
                   value={filter.location}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Mumbai"
+                  placeholder={t("job.locationPlaceholder")}
                 />
               </div>
 
@@ -223,7 +225,7 @@ const index = () => {
                   value={filter.experience}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Mumbai"
+                  placeholder={t("job.locationPlaceholder")}
                 />
               </div>
 
@@ -237,7 +239,7 @@ const index = () => {
                     onChange={handlefilterchange}
                     className="h-4 w-4 text-blue-600 rounded "
                   />
-                  <span className="text-gray-700">Work from home</span>
+                  <span className="text-gray-700">{t("job.workFromHome")}</span>
                 </label>
                 <label className="flex items-center space-x-2">
                   <input
@@ -247,7 +249,7 @@ const index = () => {
                     onChange={handlefilterchange}
                     className="h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className="text-gray-700">Part-time</span>
+                  <span className="text-gray-700">{t("job.partTime")}</span>
                 </label>
               </div>
 
@@ -285,7 +287,7 @@ const index = () => {
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
               <p className="text-center font-medium text-black">
-                {filteredjob.length} Jobs found
+                {t("job.foundCount", { count: filteredjob.length })}
               </p>
             </div>
             <div className="space-y-4">
@@ -296,7 +298,7 @@ const index = () => {
                 >
                   <div className="flex items-center space-x-2 text-blue-600 mb-4">
                     <ArrowUpRight className="h-5 w-5" />
-                    <span className="font-medium">Actively Hiring</span>
+                    <span className="font-medium">{t("job.activelyHiring")}</span>
                   </div>
                   <h2 className="text-xl font-bold text-gray-900 mb-2">
                     {job.title}
@@ -307,21 +309,21 @@ const index = () => {
                     <div className="flex items-center space-x-2 text-gray-600">
                       <PlayCircle className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">Category</p>
+                        <p className="text-sm font-medium">{t("job.category")}</p>
                         <p className="text-sm">{job.category}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <Pin className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">Location</p>
+                        <p className="text-sm font-medium">{t("job.location")}</p>
                         <p className="text-sm">{job.location}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <DollarSign className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">CTC</p>
+                        <p className="text-sm font-medium">{t("job.ctc")}</p>
                         <p className="text-sm">{job.CTC}</p>
                       </div>
                     </div>
@@ -333,7 +335,7 @@ const index = () => {
                       </span>
                       <div className="flex items-center space-x-1 text-green-600">
                         <Clock className="h-4 w-4" />
-                        <span className="text-sm">Posted recently</span>
+                        <span className="text-sm">{t("job.postedRecently")}</span>
                       </div>
                     </div>
                     <Link
@@ -354,7 +356,7 @@ const index = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
           <div className="bg-white h-full w-full max-w-sm ml-auto p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold">Filters</h2>
+              <h2 className="text-lg font-bold">{t("job.filters")}</h2>
               <button
                 onClick={() => setisFiltervisible(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -374,7 +376,7 @@ const index = () => {
                   value={filter.category}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Marketing Intern"
+                  placeholder={t("job.categoryPlaceholder")}
                 />
               </div>
               {/* Location Filter */}
@@ -388,7 +390,7 @@ const index = () => {
                   value={filter.location}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Mumbai"
+                  placeholder={t("job.locationPlaceholder")}
                 />
               </div>
               <div>
@@ -401,7 +403,7 @@ const index = () => {
                   value={filter.experience}
                   onChange={handlefilterchange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  placeholder="e.g. Mumbai"
+                  placeholder={t("job.locationPlaceholder")}
                 />
               </div>
               {/* Checkboxes */}
@@ -414,7 +416,7 @@ const index = () => {
                     onChange={handlefilterchange}
                     className="h-4 w-4 text-blue-600 rounded "
                   />
-                  <span className="text-gray-700">Work from home</span>
+                  <span className="text-gray-700">{t("job.workFromHome")}</span>
                 </label>
                 <label className="flex items-center space-x-2">
                   <input
@@ -424,7 +426,7 @@ const index = () => {
                     onChange={handlefilterchange}
                     className="h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className="text-gray-700">Part-time</span>
+                  <span className="text-gray-700">{t("job.partTime")}</span>
                 </label>
               </div>
 

@@ -10,33 +10,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-// const Applications = [
-//   {
-//     _id: "1",
-//     company: "Tech Corp",
-//     category: "Software",
-//     user: { name: "John Doe", email: "john@example.com" },
-//     createAt: "2024-03-10T12:00:00Z",
-//     status: "approved",
-//   },
-//   {
-//     _id: "2",
-//     company: "Health Solutions",
-//     category: "Healthcare",
-//     user: { name: "Jane Smith", email: "jane@example.com" },
-//     createAt: "2024-03-08T10:30:00Z",
-//     status: "pending",
-//   },
-//   {
-//     _id: "3",
-//     company: "EduLearn",
-//     category: "Education",
-//     user: { name: "Alice Johnson", email: "alice@example.com" },
-//     createAt: "2024-03-05T09:15:00Z",
-//     status: "rejected",
-//   },
-// ];
 const getStatusColor = (status: any) => {
   switch (status.toLowerCase()) {
     case "approved":
@@ -48,13 +23,16 @@ const getStatusColor = (status: any) => {
   }
 };
 const index = () => {
+  const { t } = useTranslation();
   const [searchTerm, setsearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [data, setdata] = useState<any>([]);
   useEffect(() => {
     const fetchdata = async () => {
       try {
-        const res = await axios.get("https://internshala-clone-y2p2.onrender.com/api/application");
+        const res = await axios.get(
+          "https://internshala-clone-y2p2.onrender.com/api/application"
+        );
         setdata(res.data);
       } catch (error) {
         console.log(error);
@@ -81,10 +59,10 @@ const index = () => {
         app._id === id ? res.data.data : app
       );
       setdata(updateappliacrtion);
-      toast.success("updated successfully");
+      toast.success(t("applications.updated"));
     } catch (error) {
       console.log(error);
-      toast.error("error updating");
+      toast.error(t("applications.updateError"));
     }
   };
   return (
@@ -93,9 +71,11 @@ const index = () => {
         <div className="bg-white rounded-lg shadow-sm">
           {/* Header */}
           <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t("applications.title")}
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
-              Manage and review all applications
+              {t("applications.subtitle")}
             </p>
           </div>
 
@@ -108,7 +88,7 @@ const index = () => {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setsearchTerm(e.target.value)}
-                    placeholder="Search by company, category, or applicant..."
+                    placeholder={t("applications.searchPlaceholder")}
                     className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <Mail className="absolute top-3 left-3 text-gray-400" />
@@ -123,7 +103,7 @@ const index = () => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  All
+                  {t("applications.filterAll")}
                 </button>
                 <button
                   onClick={() => setFilter("pending")}
@@ -133,7 +113,7 @@ const index = () => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  Pending
+                  {t("applications.filterPending")}
                 </button>
                 <button
                   onClick={() => setFilter("approved")}
@@ -143,7 +123,7 @@ const index = () => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  Approved
+                  {t("applications.filterApproved")}
                 </button>
                 <button
                   onClick={() => setFilter("rejected")}
@@ -153,7 +133,7 @@ const index = () => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  Rejected
+                  {t("applications.filterRejected")}
                 </button>
               </div>
             </div>
@@ -167,31 +147,31 @@ const index = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Company & Category
+                    {t("applications.colCompanyCategory")}
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Applicant
+                    {t("applications.colApplicant")}
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Applied Date
+                    {t("applications.colAppliedDate")}
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Status
+                    {t("applications.colStatus")}
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Actions
+                    {t("applications.colActions")}
                   </th>
                 </tr>
               </thead>
@@ -254,7 +234,7 @@ const index = () => {
                           href={`/detailapplication/${application._id}`}
                           className="text-blue-600 hover:text-blue-900"
                         >
-                          View Details
+                          {t("applications.viewDetails")}
                         </Link>
                         <button
                           onClick={() => {
@@ -262,6 +242,7 @@ const index = () => {
                             /* Handle approve */
                           }}
                           className="text-green-600 hover:text-green-900"
+                          aria-label={t("applications.accept")}
                         >
                           <CheckCircle2 className="h-5 w-5" />
                         </button>
@@ -271,6 +252,7 @@ const index = () => {
                             /* Handle reject */
                           }}
                           className="text-red-600 hover:text-red-900"
+                          aria-label={t("applications.reject")}
                         >
                           <XCircle className="h-5 w-5" />
                         </button>

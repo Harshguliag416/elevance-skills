@@ -1,0 +1,24 @@
+# Dependencies (already tracked historically; keep out of future commits)
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
