@@ -88,7 +88,7 @@ export function useLanguageSwitcher() {
       countdownRef.current = null;
     }
     if (resendLockRef.current) {
-      clearTimeout(resendLockRef.current);
+      clearInterval(resendLockRef.current);
       resendLockRef.current = null;
     }
   }, []);
@@ -114,13 +114,13 @@ export function useLanguageSwitcher() {
   );
 
   const startResendLock = useCallback((seconds: number) => {
-    if (resendLockRef.current) clearTimeout(resendLockRef.current);
+    if (resendLockRef.current) clearInterval(resendLockRef.current);
     setOtp((s) => ({ ...s, resendDisabled: true, resendCountdown: seconds }));
     resendLockRef.current = setInterval(() => {
       setOtp((s) => {
         const next = s.resendCountdown - 1;
         if (next <= 0) {
-          clearTimeout(resendLockRef.current as ReturnType<typeof setTimeout>);
+          clearInterval(resendLockRef.current as ReturnType<typeof setInterval>);
           resendLockRef.current = null;
           return { ...s, resendCountdown: 0, resendDisabled: false };
         }
@@ -198,13 +198,20 @@ export function useLanguageSwitcher() {
   }, [clearTimers]);
 
   // ---- main entry point -------------------------------------------------
+  // Returns the outcome so the UI can decide what to surface:
+  //   "switched"  – a non-verified language was applied instantly
+  //   "otp"       – French modal opened for a signed-in user
+  //   "guest"     – French selected but the user is not signed in (no email)
+  //   undefined   – no-op (unknown code or already-active language)
   const changeLanguage = useCallback(
-    async (code: string) => {
+    async (code: string): Promise<
+      "switched" | "otp" | "guest" | undefined
+    > => {
       const lang = LANGUAGES.find((l) => l.code === code);
-      if (!lang) return;
+      if (!lang) return undefined;
 
       // Already active — no-op.
-      if (i18n.language === code) return;
+      if (i18n.language === code) return undefined;
 
       // Non-verified language: switch instantly + persist.
       if (!lang.verificationRequired) {
@@ -223,14 +230,13 @@ export function useLanguageSwitcher() {
         } finally {
           setSwitching(false);
         }
-        return;
+        return "switched";
       }
 
-      // French: gate.
+      // French requires verification. Guests have no registered email to send a
+      // code to, so signal the caller to prompt sign-in instead of opening OTP.
       if (!user?.uid) {
-        // Guest — no registered email. Prompt to sign in.
-        // (Caller may also surface the requiresLogin message.)
-        return;
+        return "guest";
       }
 
       // Open the OTP modal and immediately request a code.
@@ -242,6 +248,7 @@ export function useLanguageSwitcher() {
         attemptsRemaining: null,
       }));
       await requestOtp();
+      return "otp";
     },
     [applyLanguage, requestOtp, user?.uid, user?.email]
   );
@@ -284,7 +291,9 @@ export function useLanguageSwitcher() {
   }, []);
 
   // Cleanup timers on unmount.
-  useEffect(() => clearTimers, [clearTimers]);
+  useEffect(() => {
+    return () => clearTimers();
+  }, [clearTimers]);
 
   return {
     currentLanguage: i18n.language,
