@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema(
       enum: SUPPORTED_LANGUAGE_CODES,
       default: DEFAULT_LANGUAGE,
     },
+    role: {
+      type: String,
+      enum: ["intern", "superadmin"],
+      default: "intern",
+    },
   },
   { timestamps: true }
 );

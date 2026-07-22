@@ -1,5 +1,4 @@
-import React, { use, useEffect, useRef, useState } from "react";
-import logo from "../Assets/logo.png";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { auth, provider } from "../firebase/firebase";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
@@ -46,7 +45,7 @@ const Navbar = () => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <a href="/" className="text-xl font-bold text-blue-600">
-                <img src={"/logo.png"} alt="" className="h-16" />
+                <img src={"/logo.png"} alt="InternArea" className="h-16" />
               </a>
             </div>
             {/* Navigation Links */}
@@ -59,6 +58,11 @@ const Navbar = () => {
               <button className="flex items-center space-x-1 text-gray-700 hover:text-blue-600">
                 <Link href={"/job"}>
                   <span>{t("nav.jobs")}</span>
+                </Link>
+              </button>
+              <button className="flex items-center space-x-1 text-gray-700 hover:text-blue-600">
+                <Link href={"/internarea/certifications"}>
+                  <span>Certifications</span>
                 </Link>
               </button>
               <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
