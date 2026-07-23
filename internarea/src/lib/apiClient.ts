@@ -46,11 +46,15 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const normalized = error;
+    // Attach a flag so callers can detect network errors vs server errors.
     if (!error.response) {
-      normalized.isNetworkError = true;
+      error.isNetworkError = true;
     }
-    return Promise.reject(normalized);
+    // Throw synchronously so Axios chains the error in the existing promise
+    // instead of creating a new rejected promise that can detach from the
+    // caller's await chain (which would produce an "Unhandled Runtime Error"
+    // overlay in Next.js 15 dev mode).
+    throw error;
   }
 );
 
