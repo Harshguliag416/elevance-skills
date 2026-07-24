@@ -53,17 +53,10 @@ const LanguageSelector: React.FC<{ className?: string }> = ({ className = "" }) 
     setOpen(false);
     buttonRef.current?.focus();
 
-    const lang = LANGUAGES.find((l) => l.code === code);
-    if (!lang?.verificationRequired) {
-      await changeLanguage(code);
-      return;
-    }
-
-    // French: hook opens the OTP modal for logged-in users. For guests it
-    // cannot (no registered email), so surface the sign-in guidance.
-    const wasOpen = otp.isOpen;
-    await changeLanguage(code);
-    if (!wasOpen && !otp.isOpen) {
+    const result = await changeLanguage(code);
+    // Guests selecting French have no registered email to verify against, so
+    // guide them to sign in. Signed-in users get the OTP modal instead.
+    if (result === "guest") {
       setGuestFrenchPrompt(true);
     }
   };

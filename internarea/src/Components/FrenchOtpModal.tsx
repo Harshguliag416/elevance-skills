@@ -207,11 +207,11 @@ const FrenchOtpModal: React.FC<Props> = ({ state, onClose, onVerify, onResend })
           </div>
 
           {/* Error / attempts */}
-          <div aria-live="assertive" className="min-h-[1.25rem] mt-3">
+          <div aria-live="assertive" className="min-h-[1.25rem] mt-3 space-y-1">
             {state.error && (
               <p className="text-sm text-red-600 dark:text-red-400">{t(state.error)}</p>
             )}
-            {!state.error && state.attemptsRemaining != null && state.attemptsRemaining > 0 && (
+            {state.attemptsRemaining != null && state.attemptsRemaining > 0 && (
               <p className="text-sm text-amber-600 dark:text-amber-400">
                 {t("otp.attemptsRemaining", { count: state.attemptsRemaining })}
               </p>
