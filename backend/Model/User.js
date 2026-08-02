@@ -40,6 +40,20 @@ const userSchema = new mongoose.Schema(
       enum: ["intern", "superadmin"],
       default: "intern",
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    premium: {
+      type: Boolean,
+      default: false,
+    },
+    resumeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resume",
+      default: null,
+    },
   },
   { timestamps: true }
 );

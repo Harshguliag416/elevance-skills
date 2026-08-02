@@ -3,7 +3,7 @@ const { MAX_ATTEMPTS } = require("../utils/otp");
 
 /**
  * One-time-password records used to gate sensitive actions (currently: enabling
- * French as the UI language).
+ * French as the UI language, resume-payment verification, and Chrome login).
  *
  * Design notes:
  *  - `hashedOtp` only — the plaintext code is never persisted.
@@ -20,11 +20,15 @@ const otpSchema = new mongoose.Schema(
     purpose: {
       type: String,
       required: true,
-      enum: ["french_language_verification"],
+      enum: [
+        "french_language_verification",
+        "resume_payment",
+        "chrome_login",
+      ],
       default: "french_language_verification",
     },
     // Target value this OTP authorizes (defensive: ties the OTP to the request).
-    targetLanguage: { type: String, required: true },
+    targetLanguage: { type: String, default: "" },
     hashedOtp: { type: String, required: true },
     attempts: { type: Number, default: 0 },
     maxAttempts: { type: Number, default: MAX_ATTEMPTS },

@@ -11,7 +11,7 @@ const { verifyFirebaseUser } = require("../middleware/auth");
 router.get("/", verifyFirebaseUser, async (req, res) => {
   try {
     const interns = await User.find({})
-      .select("name email")
+      .select("name email uid phone")
       .sort({ name: 1 });
 
     return res.status(200).json({ success: true, data: interns });

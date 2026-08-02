@@ -167,9 +167,152 @@ async function sendOtpEmail({ to, name, otp, expiryMinutes }) {
   });
 }
 
+/** Currency formatting (Indian Rupees). */
+function formatInr(amount) {
+  return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
+}
+
+/** Invoice email template used after successful subscription payment. */
+function renderInvoiceEmail({ name, invoiceNo, plan, amount, paymentId, date }) {
+  const safeName = escapeHtml(name && name.trim() ? name.trim() : "there");
+  const safeInvoice = escapeHtml(invoiceNo || "");
+  const safePlan = escapeHtml(plan || "");
+  const safeAmount = escapeHtml(formatInr(amount));
+  const safePayment = escapeHtml(paymentId || "");
+  const safeDate = escapeHtml(date || new Date().toISOString().slice(0, 10));
+
+  const text = [
+    `Hi ${safeName},`,
+    "",
+    "Thank you for your subscription payment. Your invoice is below:",
+    `  Invoice No.: ${safeInvoice}`,
+    `  Plan: ${safePlan}`,
+    `  Amount paid: ${safeAmount}`,
+    `  Payment ID: ${safePayment}`,
+    `  Date: ${safeDate}`,
+    "",
+    "Your plan is now active for the current billing month.",
+    "",
+    "For your security, never share this invoice or payment details with anyone.",
+  ].join("\n");
+
+  const html = `<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
+      <tr><td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+          <tr><td style="background:#1d4ed8;padding:20px 28px;">
+            <span style="color:#ffffff;font-size:20px;font-weight:bold;">InternArea</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <p style="margin:0 0 12px;color:#111827;font-size:16px;">Hi ${safeName},</p>
+            <p style="margin:0 0 20px;color:#374151;font-size:14px;line-height:1.6;">Thank you for your subscription payment. Here is your invoice.</p>
+            <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;">
+              <tr><td style="color:#6b7280;font-size:13px;">Invoice No.</td><td style="text-align:right;font-weight:bold;color:#111827;">${safeInvoice}</td></tr>
+              <tr><td style="color:#6b7280;font-size:13px;">Plan</td><td style="text-align:right;font-weight:bold;color:#111827;">${safePlan}</td></tr>
+              <tr><td style="color:#6b7280;font-size:13px;">Amount paid</td><td style="text-align:right;font-weight:bold;color:#111827;">${safeAmount}</td></tr>
+              <tr><td style="color:#6b7280;font-size:13px;">Payment ID</td><td style="text-align:right;color:#111827;">${safePayment}</td></tr>
+              <tr><td style="color:#6b7280;font-size:13px;">Date</td><td style="text-align:right;color:#111827;">${safeDate}</td></tr>
+            </table>
+            <p style="margin:20px 0 0;color:#6b7280;font-size:12px;">Your plan is now active for the current billing month.</p>
+          </td></tr>
+          <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+            <p style="margin:0;color:#9ca3af;font-size:11px;">&copy; ${new Date().getFullYear()} InternArea. This is an automated message.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  return { html, text };
+}
+
+/** Send the invoice email after a successful payment. */
+async function sendInvoiceEmail({ to, name, invoiceNo, plan, amount, paymentId, date }) {
+  const { html, text } = renderInvoiceEmail({ name, invoiceNo, plan, amount, paymentId, date });
+  return sendMail({
+    to,
+    subject: `Your InternArea invoice ${invoiceNo}`,
+    html,
+    text,
+  });
+}
+
+/** Reset-password email template (contains the generated password). */
+function renderResetPasswordEmail({ name, password }) {
+  const safeName = escapeHtml(name && name.trim() ? name.trim() : "there");
+  const safePassword = escapeHtml(password);
+
+  const text = [
+    `Hi ${safeName},`,
+    "",
+    "You requested a password reset for your InternArea account.",
+    "",
+    `Your new password is: ${safePassword}`,
+    "",
+    "This password contains only uppercase and lowercase letters.",
+    "Sign in with it and change it to something memorable if you wish.",
+    "",
+    "If you did not request this reset, please contact support immediately.",
+    "Never share your password with anyone.",
+  ].join("\n");
+
+  const html = `<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
+      <tr><td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+          <tr><td style="background:#1d4ed8;padding:20px 28px;">
+            <span style="color:#ffffff;font-size:20px;font-weight:bold;">InternArea</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <p style="margin:0 0 12px;color:#111827;font-size:16px;">Hi ${safeName},</p>
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6;">You requested a password reset. Your new password is below.</p>
+            <div style="text-align:center;margin:8px 0 20px;">
+              <div style="display:inline-block;background:#eff6ff;border:1px dashed #93c5fd;border-radius:10px;padding:16px 28px;">
+                <span style="font-size:26px;letter-spacing:2px;font-weight:bold;color:#1d4ed8;">${safePassword}</span>
+              </div>
+            </div>
+            <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:8px;padding:12px 16px;">
+              <p style="margin:0;color:#991b1b;font-size:12px;line-height:1.6;">
+                <strong>Security notice:</strong> Never share this password. If you did not
+                request a reset, contact support immediately.
+              </p>
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+            <p style="margin:0;color:#9ca3af;font-size:11px;">&copy; ${new Date().getFullYear()} InternArea. This is an automated message.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  return { html, text };
+}
+
+/** Send the reset-password email with the generated password. */
+async function sendResetPasswordEmail({ to, name, password }) {
+  const { html, text } = renderResetPasswordEmail({ name, password });
+  return sendMail({
+    to,
+    subject: "Your InternArea password has been reset",
+    html,
+    text,
+  });
+}
+
 module.exports = {
   isSmtpConfigured,
   renderOtpEmail,
+  renderInvoiceEmail,
+  renderResetPasswordEmail,
   sendMail,
   sendOtpEmail,
+  sendInvoiceEmail,
+  sendResetPasswordEmail,
 };

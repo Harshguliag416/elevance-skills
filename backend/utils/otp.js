@@ -57,6 +57,22 @@ function verifyOtp(candidate, storedHash) {
   return crypto.timingSafeEqual(a, b);
 }
 
+/**
+ * Dev-mode convenience: if OTP_DEV_CODE is set in the environment, that code is
+ * accepted anywhere a real OTP is accepted. Never enabled by default; exists so
+ * the OTP flows can be exercised in local preview without an SMTP server. Loudly
+ * logged whenever it is used.
+ */
+function isDevCode(candidate) {
+  const devCode = process.env.OTP_DEV_CODE;
+  if (!devCode) return false;
+  if (String(candidate || "").trim() !== String(devCode).trim()) return false;
+  console.warn(
+    "[otp] DEV CODE accepted for a verification. Set OTP_DEV_CODE only in development."
+  );
+  return true;
+}
+
 module.exports = {
   OTP_LENGTH,
   OTP_TTL_MS,
@@ -65,4 +81,5 @@ module.exports = {
   generateOtp,
   hashOtp,
   verifyOtp,
+  isDevCode,
 };

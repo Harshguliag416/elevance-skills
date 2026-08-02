@@ -41,4 +41,33 @@ const otpVerifyLimiter = rateLimit({
   },
 });
 
-module.exports = { otpRequestLimiter, otpVerifyLimiter };
+/** Password reset requests: max 5 / 15 min per user. */
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: keyByUser,
+  message: {
+    error: "Too many reset requests. Please wait a few minutes before trying again.",
+  },
+});
+
+/** Login-history write: max 30 / 15 min per user. */
+const loginHistoryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: keyByUser,
+  message: {
+    error: "Too many requests. Please wait a few minutes before trying again.",
+  },
+});
+
+module.exports = {
+  otpRequestLimiter,
+  otpVerifyLimiter,
+  passwordResetLimiter,
+  loginHistoryLimiter,
+};

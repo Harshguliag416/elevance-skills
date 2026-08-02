@@ -129,9 +129,15 @@ const index = () => {
   useEffect(()=>{
     const fetchdata=async()=>{
       try {
-        const res=await axios.get( "https://internshala-clone-y2p2.onrender.com/api/job")     
+        const res=await axios.get( "https://internshala-clone-y2p2.onrender.com/api/job")
         setjob(res.data)
-        setfilteredjobs(res.data)
+        // Honor an optional ?category=... so navbar menu links can preselect a field.
+        const q = new URLSearchParams(window.location.search).get("category");
+        if (q) {
+          setfilters((prev) => ({ ...prev, category: q }));
+        } else {
+          setfilteredjobs(res.data)
+        }
       } catch (error) {
         console.log(error)
       }

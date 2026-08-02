@@ -1,5 +1,6 @@
 import Footer from "@/Components/Fotter";
 import Navbar from "@/Components/Navbar";
+import SecurityGate from "@/Components/SecurityGate";
 import "@/styles/globals.css";
 import "@/i18n/config"; // initialize i18n before any component renders
 import type { AppProps } from "next/app";
@@ -39,9 +40,11 @@ export default function App({ Component, pageProps }: AppProps) {
       <AuthListener />
       <div className="bg-white">
         <ToastContainer/>
-        <Navbar />
-        <Component {...pageProps} />
-        <Footer />
+        <SecurityGate>
+          <Navbar />
+          <Component {...pageProps} />
+          <Footer />
+        </SecurityGate>
       </div>
     </Provider>
   );
