@@ -31,18 +31,49 @@ function getTransporter() {
   transportChecked = true;
 
   if (!isSmtpConfigured()) {
+    console.warn("[email] SMTP is not configured.");
     cachedTransporter = null;
     return null;
   }
 
   cachedTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true",
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || 465),
+    secure:
+      String(process.env.SMTP_SECURE || "true").toLowerCase() === "true",
+
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+
+    family: 4, // Force IPv4
+
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+
+    tls: {
+      rejectUnauthorized: true,
+      minVersion: "TLSv1.2",
+    },
+  });
+
+  cachedTransporter.verify((err) => {
+    if (err) {
+      console.error("================================");
+      console.error("SMTP VERIFY FAILED");
+      console.error(err);
+      console.error("================================");
+    } else {
+      console.log("================================");
+      console.log("SMTP VERIFIED SUCCESSFULLY");
+      console.log("================================");
+    }
   });
 
   return cachedTransporter;
