@@ -13,6 +13,7 @@ const {
   loginHistoryLimiter,
 } = require("../middleware/rateLimit");
 const { getFirebaseAdmin } = require("../config/firebaseAdmin");
+const { getAuth } = require("firebase-admin/auth");
 const { sendOtpEmail, sendResetPasswordEmail } = require("../utils/email");
 const {
   generateOtp,
@@ -59,7 +60,7 @@ async function resolveAccount({ type, value }) {
   if (type === "email") {
     if (adminSdk) {
       try {
-        const rec = await adminSdk.auth().getUserByEmail(value);
+        const rec = await getAuth(adminSdk).getUserByEmail(value);
         return { uid: rec.uid, email: rec.email, name: rec.displayName || "" };
       } catch (err) {
         if (err.code === "auth/user-not-found") return null;
@@ -132,7 +133,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
     const adminSdk = getFirebaseAdmin();
     if (adminSdk) {
       try {
-        await adminSdk.auth().updateUser(account.uid, { password: newPassword });
+        await getAuth(adminSdk).updateUser(account.uid, { password: newPassword });
         adminUpdated = true;
       } catch (err) {
         console.error("[auth/forgot-password] admin update error:", err.message);
