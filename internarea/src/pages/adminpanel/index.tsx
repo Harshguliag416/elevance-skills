@@ -1,60 +1,62 @@
 import React from 'react'
-import { 
-  Briefcase, 
-  Mail, 
+import {
+  Briefcase,
+  Mail,
   Send,
   Users,
   BarChart,
   Settings
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from "react-i18next";
 const index = () => {
+    const { t } = useTranslation();
     const stats = [
-        { label: 'Total Applications', value: '2,345', change: '+12%', changeType: 'positive' },
-        { label: 'Active Jobs', value: '45', change: '+3%', changeType: 'positive' },
-        { label: 'Active Internships', value: '89', change: '+24%', changeType: 'positive' },
-        { label: 'Conversion Rate', value: '5.25%', change: '-1.3%', changeType: 'negative' },
+        { label: 'totalApplications', value: '2,345', change: '+12%', changeType: 'positive' },
+        { label: 'activeJobs', value: '45', change: '+3%', changeType: 'positive' },
+        { label: 'activeInternships', value: '89', change: '+24%', changeType: 'positive' },
+        { label: 'conversionRate', value: '5.25%', change: '-1.3%', changeType: 'negative' },
       ];
-    
+
       const menuItems = [
         {
-          title: 'View Applications',
-          description: 'View and manage all applications from candidates',
+          title: 'viewApplications',
+          description: 'viewApplicationsDesc',
           icon: Mail,
           link: '/applications',
           color: 'bg-blue-600',
         },
         {
-          title: 'Post Job',
-          description: 'Create and publish new job opportunities',
+          title: 'postJob',
+          description: 'postJobDesc',
           icon: Briefcase,
           link: '/postJob',
           color: 'bg-green-600',
         },
         {
-          title: 'Post Internship',
-          description: 'Create and manage internship positions',
+          title: 'postInternship',
+          description: 'postInternshipDesc',
           icon: Send,
           link: '/postInternship',
           color: 'bg-purple-600',
         },
         {
-          title: 'Manage Users',
-          description: 'View and manage user accounts',
+          title: 'manageUsers',
+          description: 'manageUsersDesc',
           icon: Users,
           link: '/users',
           color: 'bg-orange-600',
         },
         {
-          title: 'Analytics',
-          description: 'View detailed reports and statistics',
+          title: 'analytics',
+          description: 'analyticsDesc',
           icon: BarChart,
           link: '/analytics',
           color: 'bg-red-600',
         },
         {
-          title: 'Settings',
-          description: 'Configure system preferences',
+          title: 'settings',
+          description: 'settingsDesc',
           icon: Settings,
           link: '/settings',
           color: 'bg-gray-600',
@@ -65,9 +67,9 @@ const index = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("adminPanel.title")}</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Manage your jobs, internships, and applications
+          {t("adminPanel.subtitle")}
         </p>
       </div>
 
@@ -82,7 +84,7 @@ const index = () => {
               <div className="flex items-center">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-500 truncate">
-                    {stat.label}
+                    {t(`adminPanel.stat.${stat.label}`)}
                   </p>
                   <p className="mt-1 text-3xl font-semibold text-gray-900">
                     {stat.value}
@@ -114,10 +116,10 @@ const index = () => {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    {item.title}
+                    {t(`adminPanel.menu.${item.title}`)}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {item.description}
+                    {t(`adminPanel.menu.${item.description}`)}
                   </p>
                 </div>
               </div>

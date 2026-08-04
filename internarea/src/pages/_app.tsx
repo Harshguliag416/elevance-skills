@@ -1,6 +1,8 @@
 import Footer from "@/Components/Fotter";
 import Navbar from "@/Components/Navbar";
+import SecurityGate from "@/Components/SecurityGate";
 import "@/styles/globals.css";
+import "@/i18n/config"; // initialize i18n before any component renders
 import type { AppProps } from "next/app";
 import { store } from "../store/store";
 import { Provider, useDispatch } from "react-redux";
@@ -13,7 +15,7 @@ export default function App({ Component, pageProps }: AppProps) {
   function AuthListener() {
     const dispatch = useDispatch();
     useEffect(() => {
-      auth.onAuthStateChanged((authuser) => {
+      const unsubscribe = auth.onAuthStateChanged((authuser) => {
         if (authuser) {
           dispatch(
             login({
@@ -28,6 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
           dispatch(logout());
         }
       });
+      return () => unsubscribe();
     }, [dispatch]);
     return null;
   }
@@ -37,9 +40,11 @@ export default function App({ Component, pageProps }: AppProps) {
       <AuthListener />
       <div className="bg-white">
         <ToastContainer/>
-        <Navbar />
-        <Component {...pageProps} />
-        <Footer />
+        <SecurityGate>
+          <Navbar />
+          <Component {...pageProps} />
+          <Footer />
+        </SecurityGate>
       </div>
     </Provider>
   );

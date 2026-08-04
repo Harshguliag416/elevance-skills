@@ -1,10 +1,14 @@
+require("dotenv").config();
 const bodyparser = require("body-parser");
 const express = require("express");
 const app = express();
 const cors = require("cors");
 const { connect } = require("./db");
 const router = require("./Routes/index");
-const port = 5000;
+const port = process.env.PORT || 5000;
+
+// Behind a reverse proxy (e.g. Render) so express-rate-limit sees the real IP.
+app.set("trust proxy", 1);
 
 app.use(cors());
 app.use(bodyparser.json({ limit: "50mb" }));
@@ -16,11 +20,6 @@ app.get("/", (req, res) => {
 });
 app.use("/api", router);
 connect();
-app.use((req, res, next) => {
-  req.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Origin", "*");
-  next();
-});
 app.listen(port, () => {
   console.log(`Server is running on the port ${port}`);
 });

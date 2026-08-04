@@ -1,0 +1,36 @@
+# Dependencies (already tracked historically; keep out of future commits)
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Claude settings / worktrees
+.claude/
+
+# Server logs / process IDs
+backend/server.log
+backend/server.pid
+
+# Firebase Admin Service Account Key
+backend/config/firebase-service-account.json
+
+
