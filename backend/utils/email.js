@@ -36,38 +36,55 @@ function getTransporter() {
     return null;
   }
 
+  // Debug: Log the SMTP configuration being used (hide password)
+  console.log("[email] SMTP Configuration:");
+  console.log(`  Host: ${process.env.SMTP_HOST}`);
+  console.log(`  Port: ${process.env.SMTP_PORT}`);
+  console.log(`  Secure: ${process.env.SMTP_SECURE}`);
+  console.log(`  User: ${process.env.SMTP_USER}`);
+  console.log(`  Pass: ${process.env.SMTP_PASS ? '***SET***' : 'NOT SET'}`);
+
   cachedTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 465),
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
     secure:
-      String(process.env.SMTP_SECURE || "true").toLowerCase() === "true",
+      String(process.env.SMTP_SECURE).toLowerCase() === "true",
 
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
 
+    // Network options
     family: 4, // Force IPv4
-
+    timeout: 30000,
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
 
+    // Connection pooling
     pool: true,
     maxConnections: 5,
     maxMessages: 100,
 
+    // TLS settings
     tls: {
       rejectUnauthorized: true,
       minVersion: "TLSv1.2",
     },
+
+    // Debugging
+    debug: true, // Enable SMTP protocol debugging
+    logger: true, // Log to console
   });
 
   cachedTransporter.verify((err) => {
     if (err) {
       console.error("================================");
       console.error("SMTP VERIFY FAILED");
-      console.error(err);
+      console.error("Error:", err.message);
+      console.error("Code:", err.code);
+      console.error("Command:", err.command);
       console.error("================================");
     } else {
       console.log("================================");

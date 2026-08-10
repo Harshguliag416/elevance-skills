@@ -5,13 +5,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBzFKjni5GJAF30SS90owCSLdyChpug5X4",
-  authDomain: "elevanceskills-f8ff6.firebaseapp.com",
-  projectId: "elevanceskills-f8ff6",
-  storageBucket: "elevanceskills-f8ff6.firebasestorage.app",
-  messagingSenderId: "372147647895",
-  appId: "1:372147647895:web:ed3945de001d92fcc740d2",
-  measurementId: "G-LL39K3H89K",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
