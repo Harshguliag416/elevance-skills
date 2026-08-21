@@ -4,7 +4,7 @@ import SecurityGate from "@/Components/SecurityGate";
 import "@/styles/globals.css";
 import "@/i18n/config"; // initialize i18n before any component renders
 import type { AppProps } from "next/app";
-import { store } from "../store/store";
+import { store } from "@/store/store";
 import { Provider, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { auth } from "@/firebase/firebase";
