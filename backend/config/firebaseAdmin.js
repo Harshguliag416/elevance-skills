@@ -35,6 +35,10 @@ function getFirebaseAdmin() {
   const serviceAccount = loadServiceAccount();
 
   if (!serviceAccount) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Firebase Admin credentials are required in production. Set FIREBASE_SERVICE_ACCOUNT or FIREBASE_SERVICE_ACCOUNT_BASE64.');
+    }
+    console.warn('[firebaseAdmin] No Firebase Admin credentials provided. Running in development mode without Firebase Admin.');
     available = false;
     return null;
   }
@@ -51,9 +55,10 @@ function getFirebaseAdmin() {
     available = true;
     return app;
   } catch (err) {
-    console.error("[firebaseAdmin] Initialization failed:");
-    console.error(err);
-
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Firebase Admin initialization failed in production: ${err.message}`);
+    }
+    console.error('[firebaseAdmin] Initialization failed (development):', err);
     available = false;
     return null;
   }

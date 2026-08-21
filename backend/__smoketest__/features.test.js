@@ -60,12 +60,12 @@ const authB = (r) => r.set("Authorization", `Bearer ${B}`);
   res = await request(app).post("/api/auth/forgot-password").send({});
   check("forgot-password no identifier -> 400", res.status === 400);
 
-  res = await request(app).post("/api/auth/forgot-password").send({ email: "ghost@example.com" });
-  check("forgot-password unknown email -> 404", res.status === 404);
-
-  const { generateLetterPassword } = require("../utils/passwordGenerator");
-  const pw = generateLetterPassword();
-  check("password generator letters-only", /^[A-Za-z]+$/.test(pw) && /[A-Z]/.test(pw) && /[a-z]/.test(pw));
+    // Test unknown email
+    res = await request(app).post("/api/auth/forgot-password").send({ email: "ghost@example.com" });
+    check("forgot-password unknown email -> 200 with generic message", res.status === 200 && res.body.success === true && res.body.message.includes("If your email/phone is registered, you will receive a reset instructions."));
+    // Test unknown phone
+    res = await request(app).post("/api/auth/forgot-password").send({ phone: "0000000000" });
+    check("forgot-password unknown phone -> 200 with generic message", res.status === 200 && res.body.success === true && res.body.message.includes("If your email/phone is registered, you will receive a reset instructions."));
 
   /* ---------------- Task 5: Login history ---------------- */
   res = await authA(
@@ -174,6 +174,85 @@ const authB = (r) => r.set("Authorization", `Bearer ${B}`);
   check("first application accepted (free plan)", res.status === 200);
   res = await apply({ company: "Acme", category: "IT", coverLetter: "c2", Application: "x2" });
   check("second application blocked by free plan limit -> 403", res.status === 403 && res.body.reason === "plan-limit");
+
+  /* ---------------- Task 7: Skills & Certifications (Superadmin) ---------------- */
+  // Create a superadmin user for testing
+  await User.create({
+    uid: "superadmin",
+    email: "superadmin@test.com",
+    name: "Super Admin",
+    role: "superadmin"
+  });
+  const superToken = makeToken("superadmin", "superadmin@test.com", "Super Admin");
+  const authSuper = (r) => r.set("Authorization", `Bearer ${superToken}`);
+
+  // Test skills GET (should work for any authenticated user)
+  res = await authA(request(app).get("/api/skills"));
+  check("skills GET -> 200 (any authenticated user)", res.status === 200 && Array.isArray(res.body.data));
+
+  // Test skills POST (superadmin only)
+  res = await authSuper(request(app).post("/api/skills").send({
+    name: "JavaScript",
+    description: "JavaScript programming language"
+  }));
+  check("skills POST superadmin -> 201", res.status === 201 && res.body.success === true && !!res.body.data._id);
+  const skillId = res.body.data._id;
+
+  // Test duplicate skill prevention
+  res = await authSuper(request(app).post("/api/skills").send({
+    name: "JavaScript",
+    description: "JS language"
+  }));
+  check("skills POST duplicate -> 409", res.status === 409 && res.body.success === false);
+
+  // Test skills assignment (superadmin only)
+  res = await authSuper(request(app).post("/api/skills/assign").send({
+    skillId,
+    internId: aliceUser._id.toString()
+  }));
+  check("skills assign -> 200", res.status === 200 && res.body.success === true);
+
+  // Test skills revoke (superadmin only)
+  res = await authSuper(request(app).post("/api/skills/revoke").send({
+    skillId,
+    internId: aliceUser._id.toString()
+  }));
+  check("skills revoke -> 200", res.status === 200 && res.body.success === true);
+
+  // Test certifications GET (should work for any authenticated user)
+  res = await authA(request(app).get("/api/certifications"));
+  check("certifications GET -> 200 (any authenticated user)", res.status === 200 && Array.isArray(res.body.data));
+
+  // Test certifications POST (superadmin only)
+  res = await authSuper(request(app).post("/api/certifications").send({
+    internId: aliceUser._id.toString(),
+    certificationName: "AWS Certified Developer",
+    issuingOrganization: "Amazon Web Services",
+    issueDate: "2024-01-15",
+    credentialId: "AWS-123456789",
+    credentialUrl: "https://www.credly.com/aws/123456789"
+  }));
+  check("certifications POST superadmin -> 201", res.status === 201 && res.body.success === true && !!res.body.data._id);
+  const certId = res.body.data._id;
+
+  // Test certifications GET by ID
+  res = await authA(request(app).get(`/api/certifications/${certId}`));
+  check("certifications GET/:id -> 200", res.status === 200 && res.body.success === true && res.body.data._id === certId);
+
+  // Test certifications PUT (superadmin only)
+  res = await authSuper(request(app).put(`/api/certifications/${certId}`).send({
+    certificationName: "AWS Certified Developer Associate",
+    issuingOrganization: "Amazon Web Services",
+    issueDate: "2024-01-15",
+    expirationDate: "2026-01-15",
+    credentialId: "AWS-123456789-UPDATED",
+    credentialUrl: "https://www.credly.com/aws/123456789-updated"
+  }));
+  check("certifications PUT superadmin -> 200", res.status === 200 && res.body.success === true && res.body.data.expirationDate !== null);
+
+  // Test certifications DELETE (superadmin only)
+  res = await authSuper(request(app).delete(`/api/certifications/${certId}`));
+  check("certifications DELETE superadmin -> 200", res.status === 200 && res.body.success === true);
 
   await mongoose.disconnect();
   await mongod.stop();

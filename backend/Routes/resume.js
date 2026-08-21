@@ -266,53 +266,85 @@ router.post("/create-order", verifyFirebaseUser, async (req, res) => {
  */
 router.post("/verify-payment", verifyFirebaseUser, async (req, res) => {
   try {
-    const { uid, email, name } = req.authUser;
+    const { uid, email: authEmail, name: authName } = req.authUser;
     const { orderId, paymentId, signature, dev, resumeData } = req.body || {};
 
     const session = await PaymentSession.findOne({ uid, purpose: "resume" });
+    console.log('[resume] verify-payment session:', session);
     if (!session || session.orderId !== orderId || session.expiresAt <= new Date()) {
       return res.status(403).json({ error: "No active order found for this payment." });
     }
 
     // Dev-mode simulation accepts dev payment ids.
     const effectiveDev = dev === true || String(orderId || "").startsWith("order_dev_");
+    const signatureValid = verifyPaymentSignature({ orderId, paymentId, signature });
+    console.log('[resume] verify-payment effectiveDev:', effectiveDev, 'signatureValid:', signatureValid, 'dev flag:', dev);
     const valid =
       effectiveDev ||
-      verifyPaymentSignature({ orderId, paymentId, signature });
+      signatureValid;
 
     if (!valid) {
       return res.status(400).json({ error: "Payment verification failed. Please try again." });
     }
 
     const data = resumeData || {};
-    if (!data.name || !data.name.trim()) {
+    console.log('[resume] verify-payment resumeData:', data);
+
+    // Helper to get field value with proper fallback logic
+    const getStringField = (dataField, authValue, treatEmptyAsAuthFallback = false) => {
+      if (dataField !== null && dataField !== undefined) {
+        const trimmed = String(dataField).trim();
+        if (trimmed !== '') {
+          return trimmed;
+        }
+        // If it's empty after trimming and we should treat empty as auth fallback
+        if (treatEmptyAsAuthFallback && authValue !== null && authValue !== undefined) {
+          return String(authValue).trim();
+        }
+        return trimmed;
+      }
+      // If field is null/undefined/not provided
+      if (treatEmptyAsAuthFallback && authValue !== null && authValue !== undefined) {
+        return String(authValue).trim();
+      }
+      return '';
+    };
+
+    // Use provided data, or fallback to authenticated user's name/email if not provided or empty
+    const resolvedName = getStringField(data.name, authName, true);
+    const email = getStringField(data.email, authEmail, true);
+    const phone = getStringField(data.phone, '', false);
+    const photo = data.photo !== null && data.photo !== undefined ? data.photo : "";
+    const qualifications = getStringField(data.qualifications, '', false);
+    const experience = getStringField(data.experience, '', false);
+    const personalInfo = getStringField(data.personalInfo, '', false);
+    const skills = Array.isArray(data.skills) ? data.skills : [];
+
+    if (!resolvedName) {
       return res.status(400).json({ error: "Name is required." });
-    }
-    if (!data.qualifications || !data.qualifications.trim()) {
-      return res.status(400).json({ error: "Qualifications are required." });
     }
 
     const html = generateResumeHtml({
-      name: data.name,
-      email: data.email || email,
-      phone: data.phone || "",
-      photo: data.photo || "",
-      qualifications: data.qualifications || "",
-      experience: data.experience || "",
-      personalInfo: data.personalInfo || "",
-      skills: Array.isArray(data.skills) ? data.skills : [],
+      name: resolvedName,
+      email,
+      phone,
+      photo,
+      qualifications,
+      experience,
+      personalInfo,
+      skills,
     });
 
     const resume = await Resume.create({
       uid,
-      email: email || "",
-      name: data.name,
-      phone: data.phone || "",
-      qualifications: data.qualifications,
-      experience: data.experience || "",
-      personalInfo: data.personalInfo || "",
-      skills: Array.isArray(data.skills) ? data.skills : [],
-      photo: data.photo || "",
+      email,
+      name: resolvedName,
+      phone,
+      qualifications,
+      experience,
+      personalInfo,
+      skills,
+      photo,
       generatedHtml: html,
       paymentId: paymentId || "",
       orderId,
@@ -333,6 +365,13 @@ router.post("/verify-payment", verifyFirebaseUser, async (req, res) => {
       resume: {
         _id: resume._id,
         name: resume.name,
+        email: resume.email,
+        phone: resume.phone,
+        qualifications: resume.qualifications,
+        experience: resume.experience,
+        personalInfo: resume.personalInfo,
+        skills: resume.skills,
+        photo: resume.photo,
         generatedHtml: resume.generatedHtml,
       },
     });

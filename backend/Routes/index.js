@@ -12,13 +12,14 @@ const auth = require("./auth");
 const resume = require("./resume");
 const publicSpace = require("./publicSpace");
 const subscription = require("./subscription");
+const certifications = require("./certifications");
 
 router.use("/admin", admin);
 router.use("/internship", intern);
 router.use("/job", job);
 router.use("/application", application);
 router.use("/user", user);
-router.use("/certifications", certification);
+router.use("/certifications", certifications);
 router.use("/skills", skills);
 router.use("/interns", internList);
 router.use("/auth", auth);

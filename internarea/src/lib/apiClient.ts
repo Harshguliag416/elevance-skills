@@ -9,6 +9,7 @@ import { auth } from "@/firebase/firebase";
  *
  * Request interceptor: attaches the current Firebase ID token as a Bearer
  * header so the backend can verify identity (see backend/middleware/auth.js).
+ * In development mode, also sends X-Dev-Uid header for fallback authentication.
  * The token is fetched lazily and never cached long-term — Firebase rotates it.
  *
  * Response interceptor: normalizes network errors so callers can show a
@@ -17,7 +18,7 @@ import { auth } from "@/firebase/firebase";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://internshala-clone-y2p2.onrender.com";
+  "http://localhost:5000";
 
 const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -34,6 +35,12 @@ apiClient.interceptors.request.use(async (config) => {
         config.headers = config.headers || {};
         (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
       }
+    }
+
+    // In development mode, add X-Dev-Uid header for backend auth fallback
+    if (process.env.NODE_ENV === "development") {
+      config.headers = config.headers || {};
+      (config.headers as Record<string, string>)["X-Dev-Uid"] = "test-user-uid";
     }
   } catch (err) {
     // A missing/expired token simply means the request goes unauthenticated;

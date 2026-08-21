@@ -92,42 +92,51 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
         .json({ error: "Provide either your registered email or phone number." });
     }
 
-    // Once-per-day guard.
-    const existing = await PasswordReset.findOne({ identifier: id.value });
-    if (
-      existing &&
-      existing.lastRequestedAt &&
-      Date.now() - existing.lastRequestedAt.getTime() < RESET_COOLDOWN_MS
-    ) {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - RESET_COOLDOWN_MS);
+
+    // Find the record to check if we are in cooldown.
+    let passwordResetRecord = await PasswordReset.findOne({ identifier: id.value });
+
+    // If the record exists and is not expired, we are in cooldown.
+    if (passwordResetRecord && passwordResetRecord.lastRequestedAt >= cutoff) {
       return res.status(429).json({
         error: "You can use this option only once per day.",
-        cooldownMs: RESET_COOLDOWN_MS - (Date.now() - existing.lastRequestedAt.getTime()),
       });
     }
 
+    // Otherwise, we update the record (set lastRequestedAt to now) and proceed.
+    passwordResetRecord = await PasswordReset.findOneAndUpdate(
+      { identifier: id.value },
+      { lastRequestedAt: now },
+      { upsert: true, new: true }
+    );
+
+    // Now that we have consumed an attempt, we check the account.
+    // We do not reveal whether the account exists to prevent enumeration.
     let account;
     try {
       account = await resolveAccount(id);
     } catch (err) {
       console.error("[auth/forgot-password] resolve error:", err.message);
-      return res
-        .status(500)
-        .json({ error: "Could not look up your account. Please try again." });
-    }
-    if (!account) {
-      return res.status(404).json({
-        error:
-          id.type === "email"
-            ? "No account is registered with this email."
-            : "No account is registered with this phone number.",
+      // Even if there was an error looking up the account, we still consumed the attempt.
+      // Return a generic message to avoid leaking information.
+      return res.json({
+        success: true,
+        message: "If your email/phone is registered, you will receive a reset instructions.",
       });
     }
-    if (!account.email) {
-      return res
-        .status(400)
-        .json({ error: "No email is attached to this account, so a reset cannot be delivered." });
+
+    // If the account does not exist or has no email, we still return a generic success message.
+    // This prevents account enumeration.
+    if (!account || !account.email) {
+      return res.json({
+        success: true,
+        message: "If your email/phone is registered, you will receive a reset instructions.",
+      });
     }
 
+    // Account exists and has an email: proceed with password reset.
     const newPassword = generateLetterPassword();
     let adminUpdated = false;
     const adminSdk = getFirebaseAdmin();
@@ -137,6 +146,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
         adminUpdated = true;
       } catch (err) {
         console.error("[auth/forgot-password] admin update error:", err.message);
+        // We still consumed the attempt above, so we just return an error.
         return res
           .status(500)
           .json({ error: "Could not update your password. Please try again." });
@@ -158,12 +168,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
         .json({ error: "We couldn't email the new password. Please try again." });
     }
 
-    // Record the request so the once-per-day rule holds.
-    await PasswordReset.findOneAndUpdate(
-      { identifier: id.value },
-      { $set: { lastRequestedAt: new Date() } },
-      { upsert: true, new: true }
-    );
+    // The PasswordReset record was already updated atomically at the start, so we don't need to update again.
 
     return res.json({
       success: true,

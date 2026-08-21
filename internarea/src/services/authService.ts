@@ -1,4 +1,5 @@
 import apiClient from "@/lib/apiClient";
+import { auth } from "@/firebase/firebase";
 
 /**
  * Auth-related API (Tasks 3 & 5).
@@ -42,11 +43,49 @@ export async function getLoginHistory() {
 }
 
 export async function requestChromeOtp() {
-  const { data } = await apiClient.post("/auth/chrome/request-otp");
-  return data;
+  try {
+    const currentUser = auth.currentUser;
+    let token = null;
+    if (currentUser) {
+      token = await currentUser.getIdToken();
+    }
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      // In development, we can use the dev Uid header for insecure auth
+      if (process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
+        headers['X-Dev-Uid'] = 'dev-test-uid';
+      }
+    }
+    const { data } = await apiClient.post("/auth/chrome/request-otp", {}, { headers });
+    return data;
+  } catch (err) {
+    console.error("[authService] requestChromeOtp error:", err);
+    throw err;
+  }
 }
 
 export async function verifyChromeOtp(otp: string) {
-  const { data } = await apiClient.post("/auth/chrome/verify-otp", { otp });
-  return data;
+  try {
+    const currentUser = auth.currentUser;
+    let token = null;
+    if (currentUser) {
+      token = await currentUser.getIdToken();
+    }
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      // In development, we can use the dev Uid header for insecure auth
+      if (process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
+        headers['X-Dev-Uid'] = 'dev-test-uid';
+      }
+    }
+    const { data } = await apiClient.post("/auth/chrome/verify-otp", { otp }, { headers });
+    return data;
+  } catch (err) {
+    console.error("[authService] verifyChromeOtp error:", err);
+    throw err;
+  }
 }

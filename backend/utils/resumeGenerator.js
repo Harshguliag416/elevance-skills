@@ -84,10 +84,10 @@ function generateResumeHtml(data = {}) {
     </div>
   </div>
 
-  ${qualifications ? `<section><h2>Qualifications</h2><ul>${qualifications}</ul></section>` : ""}
-  ${experience ? `<section><h2>Experience</h2><ul>${experience}</ul></section>` : ""}
-  ${skills ? `<section><h2>Skills</h2><div class="skills">${skills}</div></section>` : ""}
-  ${personalInfo ? `<section><h2>Personal Information</h2><p class="body">${personalInfo}</p></section>` : ""}
+  <section><h2>Qualifications</h2><ul>${qualifications}</ul></section>
+  <section><h2>Experience</h2><ul>${experience}</ul></section>
+  <section><h2>Skills</h2><div class="skills">${skills}</div></section>
+  <section><h2>Personal Information</h2><p class="body">${personalInfo}</p></section>
 </body>
 </html>`;
 }

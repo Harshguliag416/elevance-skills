@@ -83,10 +83,155 @@ const ResumePage = () => {
   const [otpDevCodeEnabled, setOtpDevCodeEnabled] = useState(false);
   const [otpDevCode, setOtpDevCode] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
-  const [otpAttempts, setOtpAttempts] = useState<number | null>(null);
+  const [otpAttempts, setotpAttempts] = useState<number | null>(null);
   const [otpBusy, setOtpBusy] = useState(false);
   const [order, setOrder] = useState<{ orderId: string; keyId: string | null; devMode: boolean; amount: number } | null>(null);
   const [paying, setPaying] = useState(false);
+
+  const set = (key: keyof ResumeFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+  };
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await fileToResizedDataUrl(file);
+      setForm((f) => ({ ...f, photo: dataUrl }));
+    } catch (err) {
+      toast.error(t("resume.invalidPhoto"));
+    }
+  };
+
+  const handleSkills = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSkillsInput(e.target.value);
+    setForm((f) => ({
+      ...f,
+      skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+    }));
+  };
+
+  const validate = () => {
+    console.log("[resume] validate form:", form);
+    if (!form.name.trim()) return t("resume.nameRequired");
+    if (!form.email.trim()) return t("resume.emailRequired");
+    if (!form.qualifications.trim()) return t("resume.qualificationsRequired");
+    return null;
+  };
+
+  const requestOtp = useCallback(async () => {
+    setOtpError(null);
+    setotpAttempts(null);
+    setOtpBusy(true);
+    try {
+      const res = await requestResumeOtp();
+      setOtpDevMode(!!res.devMode);
+      setOtpDevCodeEnabled(!!res.devCodeEnabled);
+      setOtpDevCode(res.devCode || null);
+      setOtpOpen(true);
+      return true;
+    } catch (err: any) {
+      setOtpError(err?.response?.data?.error || t("otp.errorGeneric"));
+      return false;
+    } finally {
+      setOtpBusy(false);
+    }
+  }, []);
+
+  const verifyOtp = useCallback(async (code: string) => {
+    setOtpError(null);
+    try {
+      await verifyResumeOtp(code);
+      setOtpOpen(false);
+      await beginPayment();
+      return true;
+    } catch (err: any) {
+      setOtpError(err?.response?.data?.error || t("otp.errorGeneric"));
+      setotpAttempts(err?.response?.data?.attemptsRemaining ?? null);
+      return false;
+    }
+  }, []);
+
+  const beginPayment = useCallback(async () => {
+    const res = await createResumeOrder();
+    setOrder({ orderId: res.orderId, keyId: res.keyId, devMode: res.devMode, amount: res.amount });
+    setStage("payment");
+    if (!res.keyId) return; // dev mode → show simulate button
+    await payWithRazorpay(res.orderId, res.keyId, res.amountPaise);
+  }, []);
+
+  const payWithRazorpay = useCallback((orderId: string, keyId: string, amountPaise: number) => {
+    setPaying(true);
+    openCheckout({
+      keyId,
+      amountPaise,
+      orderId,
+      name: "InternArea",
+      description: "Professional resume (₹50)",
+      email: form.email,
+      onSuccess: (response) => confirmPayment(orderId, response.razorpay_payment_id, response.razorpay_signature, false),
+      onError: () => {
+        setPaying(false);
+        toast.error(t("resume.paymentError"));
+      },
+    });
+  }, [openCheckout]);
+
+  const simulatePayment = useCallback(async () => {
+    if (!order) return;
+    setPaying(true);
+    await confirmPayment(order.orderId, `pay_dev_${Date.now()}`, "", true);
+  }, [order]);
+
+  const confirmPayment = useCallback(async (orderId: string, paymentId: string, signature: string, dev: boolean) => {
+    console.log('[resume] confirmPayment called with form:', form);
+    try {
+      const res = await verifyResumePayment({
+        orderId,
+        paymentId,
+        signature,
+        dev,
+        resumeData: form,
+      });
+      setGeneratedHtml(res.resume.generatedHtml);
+      setResumeId(res.resume._id);
+      setStage("done");
+      toast.success(t("resume.paymentSuccess"));
+    } catch (err: any) {
+      setPaying(false);
+      toast.error(err?.response?.data?.error || t("resume.paymentError"));
+    }
+  }, []);
+
+  const printResume = () => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(generatedHtml);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      console.log('[resume] handleSubmit called');
+      console.log('[resume] form at handleSubmit:', form);
+      const invalid = validate();
+      if (invalid) {
+        console.log('[resume] validation failed:', invalid);
+        toast.error(invalid);
+        return;
+      }
+      console.log('[resume] validation passed, stage before requestOtp:', stage);
+      // Removed redundant setStage("form") line
+      const otpResult = await requestOtp();
+      console.log('[resume] requestOtp returned:', otpResult);
+    } catch (err) {
+      console.error('[resume] handleSubmit error:', err);
+      toast.error("An error occurred. Please try again.");
+    }
+  }, [form, requestOtp, t, setStage]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -110,142 +255,6 @@ const ResumePage = () => {
       .catch(() => undefined);
   }, [user?.uid]);
 
-  const set = (key: keyof ResumeFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const dataUrl = await fileToResizedDataUrl(file);
-      setForm((f) => ({ ...f, photo: dataUrl }));
-    } catch (err) {
-      toast.error(t("resume.invalidPhoto"));
-    }
-  };
-
-  const handleSkills = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSkillsInput(e.target.value);
-    setForm((f) => ({
-      ...f,
-      skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-    }));
-  };
-
-  const validate = () => {
-    if (!form.name.trim()) return t("resume.nameRequired");
-    if (!form.email.trim()) return t("resume.emailRequired");
-    if (!form.qualifications.trim()) return t("resume.qualificationsRequired");
-    return null;
-  };
-
-  const requestOtp = async () => {
-    setOtpError(null);
-    setOtpAttempts(null);
-    setOtpBusy(true);
-    try {
-      const res = await requestResumeOtp();
-      setOtpDevMode(!!res.devMode);
-      setOtpDevCodeEnabled(!!res.devCodeEnabled);
-      setOtpDevCode(res.devCode || null);
-      setOtpOpen(true);
-      return true;
-    } catch (err: any) {
-      setOtpError(err?.response?.data?.error || t("otp.errorGeneric"));
-      return false;
-    } finally {
-      setOtpBusy(false);
-    }
-  };
-
-  const verifyOtp = useCallback(async (code: string) => {
-    setOtpError(null);
-    try {
-      await verifyResumeOtp(code);
-      setOtpOpen(false);
-      await beginPayment();
-      return true;
-    } catch (err: any) {
-      setOtpError(err?.response?.data?.error || t("otp.errorGeneric"));
-      setOtpAttempts(err?.response?.data?.attemptsRemaining ?? null);
-      return false;
-    }
-  }, []);
-
-  const beginPayment = async () => {
-    const res = await createResumeOrder();
-    setOrder({ orderId: res.orderId, keyId: res.keyId, devMode: res.devMode, amount: res.amount });
-    setStage("payment");
-    if (!res.keyId) return; // dev mode → show simulate button
-    await payWithRazorpay(res.orderId, res.keyId, res.amountPaise);
-  };
-
-  const payWithRazorpay = async (orderId: string, keyId: string, amountPaise: number) => {
-    setPaying(true);
-    openCheckout({
-      keyId,
-      amountPaise,
-      orderId,
-      name: "InternArea",
-      description: "Professional resume (₹50)",
-      email: form.email,
-      onSuccess: (response) => confirmPayment(orderId, response.razorpay_payment_id, response.razorpay_signature, false),
-      onError: () => {
-        setPaying(false);
-        toast.error(t("resume.paymentError"));
-      },
-    });
-  };
-
-  const simulatePayment = async () => {
-    if (!order) return;
-    setPaying(true);
-    await confirmPayment(order.orderId, `pay_dev_${Date.now()}`, "", true);
-  };
-
-  const confirmPayment = async (orderId: string, paymentId: string, signature: string, dev: boolean) => {
-    try {
-      const res = await verifyResumePayment({
-        orderId,
-        paymentId,
-        signature,
-        dev,
-        resumeData: form,
-      });
-      setGeneratedHtml(res.resume.generatedHtml);
-      setResumeId(res.resume._id);
-      setStage("done");
-      toast.success(t("resume.paymentSuccess"));
-    } catch (err: any) {
-      setPaying(false);
-      toast.error(err?.response?.data?.error || t("resume.paymentError"));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const invalid = validate();
-    if (invalid) {
-      toast.error(invalid);
-      return;
-    }
-    setStage("form");
-    await requestOtp();
-  };
-
-  const printResume = () => {
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(generatedHtml);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 300);
-  };
-
-  const inputCls =
-    "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm";
-  const labelCls = "block text-sm font-medium text-gray-700 mb-1";
-
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-4xl mx-auto px-4">
@@ -259,10 +268,8 @@ const ResumePage = () => {
 
         {existing && stage === "form" && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-green-700">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">{t("resume.hasResume")}</span>
-            </div>
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-medium">{t("resume.hasResume")}</span>
             <button
               onClick={printResume}
               disabled={!existing.generatedHtml}

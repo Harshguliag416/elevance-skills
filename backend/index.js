@@ -19,7 +19,15 @@ app.get("/", (req, res) => {
   res.send("hello this is internshala backend");
 });
 app.use("/api", router);
-connect();
-app.listen(port, () => {
-  console.log(`Server is running on the port ${port}`);
-});
+
+// Connect to database first, then start the server
+connect()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on the port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to start server due to database connection error:", err);
+    process.exit(1);
+  });

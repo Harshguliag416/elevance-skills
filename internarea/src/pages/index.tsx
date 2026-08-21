@@ -12,8 +12,8 @@ import {
   MapPin,
 } from "lucide-react";
 import Link from "next/link";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
+import apiClient from "@/lib/apiClient";
 
 export default function SvgSlider() {
   const { t } = useTranslation();
@@ -67,8 +67,8 @@ export default function SvgSlider() {
     const fetchdata = async () => {
       try {
         const [internshipres, jobres] = await Promise.all([
-          axios.get("https://internshala-clone-y2p2.onrender.com/api/internship"),
-          axios.get("https://internshala-clone-y2p2.onrender.com/api/job"),
+          apiClient.get("/internship"),
+          apiClient.get("/job"),
         ]);
         setinternship(internshipres.data);
         setjob(jobres.data);
